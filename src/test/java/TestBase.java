@@ -11,6 +11,7 @@ public class TestBase {
         Configuration.browserSize = System.getProperty("selenide.browserSize", "1920x1200");
         // Increase default timeout for slow pages
         Configuration.timeout = 10000;
+        Configuration.headless = Boolean.parseBoolean(System.getProperty("selenide.headless", "false"));
     }
 
     @AfterEach
