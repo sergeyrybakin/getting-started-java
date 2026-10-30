@@ -1,7 +1,10 @@
+package tests;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import com.codeborne.selenide.Configuration;
+
 import com.codeborne.selenide.Selenide;
+import com.codeborne.selenide.Configuration;
 
 public class TestBase {
     @BeforeEach
@@ -9,9 +12,8 @@ public class TestBase {
         Configuration.baseUrl = System.getProperty("selenide.baseUrl", "https://github.com");
         Configuration.browser = System.getProperty("selenide.browser", "chrome");
         Configuration.browserSize = System.getProperty("selenide.browserSize", "1920x1200");
-        // Increase default timeout for slow pages
         Configuration.timeout = 10000;
-        Configuration.headless = Boolean.parseBoolean(System.getProperty("selenide.headless", "false"));
+        Configuration.headless = true;
     }
 
     @AfterEach
