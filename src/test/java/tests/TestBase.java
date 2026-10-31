@@ -13,7 +13,7 @@ public class TestBase {
         Configuration.browser = System.getProperty("selenide.browser", "chrome");
         Configuration.browserSize = System.getProperty("selenide.browserSize", "1920x1200");
         Configuration.timeout = 10000;
-        Configuration.headless = true;
+        Configuration.headless = Boolean.parseBoolean(System.getProperty("selenide.headless", "true"));
     }
 
     @AfterEach
