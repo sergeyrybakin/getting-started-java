@@ -1,3 +1,6 @@
 .gradle/
 build/
 RECOMMENDATIONS.md
+allure-report/
+allure-results/
+node_modules/

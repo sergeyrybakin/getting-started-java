@@ -16,7 +16,10 @@ dependencies {
     testImplementation(
         "com.codeborne:selenide:7.19.0",
         "org.junit.jupiter:junit-jupiter-api:6.1.3",
-        "org.seleniumhq.selenium:selenium-java:4.52.0"
+        "org.seleniumhq.selenium:selenium-java:4.52.0",
+        "io.qameta.allure:allure-selenide:2.34.0",
+        "io.qameta.allure:allure-junit5:2.34.0",
+        "org.aspectj:aspectjweaver:1.9.20"
     )
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:6.1.3"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -28,6 +31,19 @@ tasks.withType(JavaCompile) {
 
 test {
     useJUnitPlatform()
+    // -javaagent: aspectjweaver для weaving @Step (резолвим jar из testRuntimeClasspath без хардкода пути кэша)
+    jvmArgumentProviders.add(new org.gradle.process.CommandLineArgumentProvider() {
+        @Override
+        List<String> asArguments() {
+            def weaverJar = configurations.testRuntimeClasspath.files
+                    .find { it.name.startsWith("aspectjweaver") && it.name.endsWith(".jar") }
+            if (weaverJar != null) {
+                ["-javaagent:${weaverJar}"]
+            } else {
+                []
+            }
+        }
+    })
     // Forward only if set
     def prop
     prop = System.getProperty("selenide.baseUrl")

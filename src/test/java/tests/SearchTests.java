@@ -19,27 +19,24 @@ public class SearchTests extends TestBase {
     @Test
     void successfulSearchTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
         searchPage.searchFor(SEARCH_CRITERION).verifyResultsContain(SEARCH_CRITERION);
     }
 
     @Test
     void checkSearchInputClearIconTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
-        assert !searchPage.isClearIconVisible();
-        searchPage.typeSearchQuery(SEARCH_CRITERION);
-        assert searchPage.isClearIconVisible();
-        searchPage.clickClearIconRight();
-        assert searchPage.getSearchInputValue().isEmpty();
-        assert !searchPage.isClearIconVisible();
+        searchPage.verifyClearIconHidden()
+                .typeSearchQuery(SEARCH_CRITERION)
+                .verifyClearIconVisible()
+                .clickClearIcon()
+                .verifySearchInputEmpty()
+                .verifyClearIconHidden();
     }
 
     @Test
     void noResultWithSearchingNonExistentRepoTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
         searchPage.searchFor("*=*=*=*");
-        searchResultsPage.verifyResultsContain("0 results");
+        searchResultsPage.verifyResultsCount("0 results ");
     }
 }
