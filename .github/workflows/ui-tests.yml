@@ -1,0 +1,142 @@
+name: UI Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser_size:
+        description: 'Browser window size'
+        required: false
+        default: '1366x768'
+        type: choice
+        options:
+          - '1366x768'
+          - '1920x1080'
+  push:
+    branches: ['**']
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+permissions: {}
+
+jobs:
+  test:
+    name: Run UI Tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        run: ./gradlew --version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Allure CLI
+        run: npm ci
+
+      - name: Validate browser size
+        run: |
+          BROWSER_SIZE="${{ github.event.inputs.browser_size || '1366x768' }}"
+          case "$BROWSER_SIZE" in
+            1366x768|1920x1080)
+              echo "BROWSER_SIZE=$BROWSER_SIZE" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "::error::Invalid browser size: $BROWSER_SIZE"
+              exit 1
+              ;;
+          esac
+
+      - name: Run tests
+        run: ./gradlew test -Dselenide.headless=true -Dselenide.browserSize="$BROWSER_SIZE"
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: allure-results
+          path: build/allure-results
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: test-reports
+          path: |
+            build/test-results/
+            build/reports/
+          retention-days: 7
+          if-no-files-found: warn
+
+  publish-allure:
+    name: Publish Allure Report
+    if: always() && github.ref == 'refs/heads/master'
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Allure CLI
+        run: npm ci
+
+      - name: Download Allure results
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: allure-results
+          path: allure-results
+        continue-on-error: true
+
+      - name: Generate Allure report
+        run: |
+          if [ -d "allure-results" ] && ls allure-results/*-result.json 1>/dev/null 2>&1; then
+            npx allure generate allure-results -o build/allure-report --clean
+            echo "HAS_REPORT=true" >> "$GITHUB_ENV"
+          else
+            echo "No result files found, skipping report generation"
+            echo "HAS_REPORT=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Upload Allure report artifact
+        if: env.HAS_REPORT == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: allure-report
+          path: build/allure-report
+          retention-days: 7
+
+      - name: Deploy to GitHub Pages
+        if: env.HAS_REPORT == 'true'
+        id: deployment
+        uses: actions/deploy-pages@d8af841ac341d06640cbe393899ae55e59e77c00 # v4.0.1
+        with:
+          path: build/allure-report
