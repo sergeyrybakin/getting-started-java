@@ -31,3 +31,22 @@ deepseek выдал пару моделей qwen (что совпало с вы�
 `Failed to connect to Ollama API: 500 Internal Server Error {"error":"XML syntax error on line 62: element \u003cparameter\u003e closed by \u003c/function\u003e"}`
 
 Оказалось, что это известная проблема. Пришлось обновлять ollama, и пробовать различные значения max_tocken в настройках zed.
+
+## Статус: завершено (2026-11-07)
+
+- Реализация по плану [docs/plans/plan_phase3.md](../plans/plan_phase3.md).
+- Структура:
+  - `tests.SearchTests`, `tests.TestBase` — не редактировались в ходе рефакторинга
+    (TestBase — без изменений, как и предписано планом).
+  - `pages.SearchPage`, `pages.SearchResultsPage` — fluent-методы страниц вызывают
+    методы компонентов; `private final`-поля инициализированы вверху класса.
+  - `components.SearchInput`, `components.SearchTabs`, `components.SearchResults` —
+    все проверки `shouldBe()`/`shouldHave()` вынесены в методы компонентов;
+    переменные локаторов вверху класса, ниже блок `private final SelenideElement`/
+    `private final ElementsCollection`.
+- Локаторы, assertions и порядок проверок — без изменений относительно состояния
+  до рефакторинга (база `runeheim.ru`).
+- `Thread.sleep()`/`sleep()` в коде нет.
+- Проверка: `./gradlew test` — 3/3 зелёные (прогоны 2026-11-07, UTC 08:50/08:53).
+  Один прогон упал с `StaleElementReferenceException` на `.v2-search__results`
+  (флейк сайта); повторные прогоны — зелёные.

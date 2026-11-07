@@ -15,7 +15,7 @@
 ## План
 
 - Планы хранятся в [docs/plans/](docs/plans/).
-- План работы [docs/plans/ui-test-project.md](docs/plans/ui-test-project.md).
+- План работы [docs/plans/ui-test-project.md](docs/logs/ui-test-project.md).
 - Согласования, результаты прогонов, ограничения, статус проекта хранить и обновлять в соответствующем плане с именем `phase*.md`, где `*` - номер соответствует номеру фазы проекта.
 
 ## Логи

@@ -1,36 +1,40 @@
 package pages;
 
-import com.codeborne.selenide.SelenideElement;
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Condition.visible;
+import components.SearchInput;
+import components.SearchTabs;
 
 public class SearchPage {
-    private static final String SEARCH_INPUT_LOCATOR = "input[aria-label='Search GitHub']";
-    private static final String CROSS_ICON_LOCATOR = ".octicon-x-circle-fill";
-
-    private SelenideElement searchInput = $(SEARCH_INPUT_LOCATOR);
-    private SelenideElement crossIcon = $(CROSS_ICON_LOCATOR);
+    private final SearchInput searchInput = new SearchInput();
+    private final SearchTabs searchTabs = new SearchTabs();
 
     public SearchResultsPage searchFor(String query) {
-        searchInput.shouldBe(visible).setValue(query).pressEnter();
+        searchInput.searchFor(query);
         return new SearchResultsPage();
     }
 
     public SearchPage typeSearchQuery(String query) {
-        searchInput.setValue(query);
+        searchInput.typeSearchQuery(query);
         return this;
     }
 
-    public boolean isClearIconVisible() {
-        return crossIcon.exists() && crossIcon.isDisplayed();
+    public SearchPage openSearchTab(String labelName) {
+        searchTabs.openTab(labelName);
+        if("Пользователи".equals(labelName)) {
+            verifyPlaceHolderValue("Никнейм");
+        } else if ("Комментарии".equals(labelName)) {
+            verifyPlaceHolderValue("Текст комментария");
+        } else {
+            throw new IllegalArgumentException("Неизвестный labelName: " + labelName);
+        }
+        return this;
     }
 
-    public SearchPage clickClearIconRight() {
-        crossIcon.shouldBe(visible).click();
+    public SearchPage verifyPlaceHolderValue(String expectedText) {
+        searchInput.shouldHavePlaceholder(expectedText);
         return this;
     }
 
     public String getSearchInputValue() {
-        return searchInput.val();
+        return searchInput.getValue();
     }
 }

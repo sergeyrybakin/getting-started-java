@@ -14,32 +14,24 @@ public class SearchTests extends TestBase {
     private SearchPage searchPage = new SearchPage();
     private SearchResultsPage searchResultsPage = new SearchResultsPage();
     private static final String OPEN_URL_LOCATOR = Configuration.baseUrl+"/search";
-    private static final String SEARCH_CRITERION = "qa.guru";
+    private static final String SEARCH_CRITERION = "фото";
 
     @Test
     void successfulSearchTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
         searchPage.searchFor(SEARCH_CRITERION).verifyResultsContain(SEARCH_CRITERION);
     }
 
     @Test
-    void checkSearchInputClearIconTest() {
+    void verifyTabsPlaceHoldersTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
-        assert !searchPage.isClearIconVisible();
-        searchPage.typeSearchQuery(SEARCH_CRITERION);
-        assert searchPage.isClearIconVisible();
-        searchPage.clickClearIconRight();
-        assert searchPage.getSearchInputValue().isEmpty();
-        assert !searchPage.isClearIconVisible();
+        searchPage.openSearchTab("Комментарии");
     }
 
     @Test
-    void noResultWithSearchingNonExistentRepoTest() {
+    void noResultWithSearchingNonExistentArticleTest() {
         open(OPEN_URL_LOCATOR);
-        refresh();
         searchPage.searchFor("*=*=*=*");
-        searchResultsPage.verifyResultsContain("0 results");
+        searchResultsPage.verifyResultsContain("Посты не найдены");
     }
 }
