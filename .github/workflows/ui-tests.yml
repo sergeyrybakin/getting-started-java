@@ -33,7 +33,6 @@ env:
   ALLURE_RESULTS_DIR: "build/allure-results"
   ALLURE_REPORT_DIR: "allure-report"
   ARTIFACT_RETENTION_DAYS: 7
-  PAGES_BRANCHES: '["master","lispublika"]'
 
 jobs:
   test:
@@ -113,8 +112,8 @@ jobs:
     name: Publish Allure report to GitHub Pages
     needs: test
     # Публикация даже при упавших тестах (test-job при этом остаётся failed),
-    # только для целевых веток
-    if: always() && contains(fromJSON(env.PAGES_BRANCHES), github.ref_name)
+    # только для целевых веток (контекст env недоступен в job-if — ветки встроены)
+    if: always() && (github.ref_name == 'master' || github.ref_name == 'lispublika')
     runs-on: ubuntu-24.04
     permissions:
       contents: read

@@ -47,3 +47,10 @@
 
 - 2026-11-09: push ветки lispublika выполнен (origin/sergeyrybakin, new branch, tracking установлен).
   Ожидался автостарт workflow ui-tests.yml (в push входят .github/workflows/ui-tests.yml, build.gradle, package*.json).
+
+## Фикс (2026-11-09)
+
+- GitHub отклонил workflow: «Unrecognized named-value: env» в job-if pages-job (контекст env
+  недоступен в job-level if). Исправлено: ветки встроены в выражение —
+  always() && (github.ref_name == \master\ || github.ref_name == \lispublika\),
+  переменная PAGES_BRANCHES удалена из env. YAML перевалидирован, push выполнен.
