@@ -98,3 +98,36 @@ Allure: `SearchResultsPage`/`SearchResults` без состояния, элем�
 - `d96ef6a` — Фаза 4: `build.gradle` (deps + очистка), `TestBase`
   (слушатель SelenideLogger), `SearchTests` (Allure.step).
 - `e7c8688` — Фаза 4: план и правила агента (предшествовал реализации).
+
+
+### Статус: завершено (2026-11-08) коммит 8d8b0e10931806923cbf44cf69a81efbd62a5fdd ветка lispublika
+
+Готово. Фаза 4 завершена и зафиксирована.
+
+## Что сделано
+
+__Код (коммит `d96ef6a`):__
+
+- `build.gradle` — добавил `allure-junit-platform:3.1.1` + `allure-selenide:3.1.1` и `doFirst { delete "allure-results" }` в блок `test` (результаты прогонов не смешиваются — проверено).
+- `TestBase.java` — `@BeforeAll static setupAllureSelenide()`: `SelenideLogger.addListener(AllureSelenide)` → вложения (скриншот + исходник страницы) припадают автоматически.
+- `SearchTests.java` — каждое действие обёрнуто в `Allure.step(...)` с понятными названиями.
+
+__Документы (коммит `8d8b0e1`):__
+
+- `docs/logs/phase4-lispublika-qwen3_8b-chat-history.md` — лог сессии, статус `DONE (commit: d96ef6a)`, полный чек-лист + важное наблюдение.
+- `docs/plans/plan_phase4.md` — пометка `Статус: DONE`.
+- Убраны старые `docs/logs/homework.md`, `docs/logs/ui-test-project.md` (были в WIP).
+
+## Проверка (весь чек-лист плана ✓)
+
+- Совместимость: Selenide 7.19.0 / Selenium 4.52.0 / JUnit 6.1.3 ↔ Allure 3.1.1 — ок, остановка не потребовалась.
+- `aspectjweaver` — в проекте отсутствует (убирать было нечего).
+- Отчёт сгенерирован (`generate`) и открыт в браузере — __`http://localhost:8091` (HTTP 200)__, 3 теста, шаги видны (3–4 шага на тест).
+- Контролируемое падение (`FailureDemoTests`) показало причину, __именно упавший шаг__ и вложения (`.png` + `.html`); после проверки временный тест __удалён__.
+- Финальный прогон: `BUILD SUCCESSFUL`, 3/3 passed, вложений 0.
+
+## ⚠️ Честное наблюдение (не замаскировано)
+
+Тест `successfulSearchTest` на живом `runeheim.ru` — __flaky__: в части прогонов падает с `StaleElementReferenceException` / `Element should be visible {.v2-search__results}` (гонка с перерисовкой результатов). Это __предсуществующая__ нестабильность, не вызванная Allure-интеграцией — подтверждено: `SearchResultsPage`/`SearchResults` без состояния, элемент `$(...)` в Selenide перелокационируется на каждый вызов, поэтому разбивка цепочки на два `Allure.step` функционально идентична оригиналу. В логе есть и зелёные (run1, run5), и красные (run3, run4) прогоны одним и тем же кодом. По AGENTS.md ретраями __не маскировал__; рекомендовал отдельную работу по стабилизации ожидания `.v2-search__results` (за рамками фазы 4).
+
+Рабочее дерево чистое, браузерный сервер поднят. Всё готово.

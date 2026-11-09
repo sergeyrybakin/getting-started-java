@@ -1,0 +1,9 @@
+{
+  "name": "getting-started-java-ui-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "UI test tooling for getting-started-java (Allure CLI)",
+  "devDependencies": {
+    "allure": "3.22.1"
+  }
+}

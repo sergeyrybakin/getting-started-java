@@ -1,0 +1,140 @@
+name: UI Tests
+
+# Базовые permissions всего workflow — без токена.
+# Только pages-job declares собственные permissions (обязательное условие GitHub Pages).
+permissions: {}
+
+concurrency:
+  group: ui-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+on:
+  push:
+    branches: ["**"]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+    inputs:
+      browser_size:
+        description: "Размер браузера (selenide.browserSize)"
+        type: choice
+        options:
+          - "1920x1200"
+          - "1366x768"
+        default: "1920x1200"
+
+# Все переменные определены в самом начале файла
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "22"
+  BROWSER_SIZE: ${{ github.event.inputs.browser_size || '1920x1200' }}
+  HEADLESS: "true"
+  ALLURE_RESULTS_DIR: "build/allure-results"
+  ALLURE_REPORT_DIR: "allure-report"
+  ARTIFACT_RETENTION_DAYS: 7
+  PAGES_BRANCHES: '["master","lispublika"]'
+
+jobs:
+  test:
+    name: Run UI tests (headless Chrome)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Проверка browser_size: только разрешённые значения, иначе падение job
+      - name: Verify browser_size
+        shell: bash
+        run: |
+          case "${BROWSER_SIZE}" in
+            1366x768|1920x1200) echo "browser_size=${BROWSER_SIZE}" ;;
+            *) echo "::error::Недопустимый browser_size: ${BROWSER_SIZE} (допустимо: 1366x768, 1920x1200)"; exit 1 ;;
+          esac
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      # В CI передаются ТОЛЬКО selenide.headless и selenide.browserSize;
+      # baseUrl и browser — дефолты TestBase
+      - name: Run UI tests
+        run: |
+          ./gradlew test --console=plain \
+            -Dselenide.headless="${HEADLESS}" \
+            -Dselenide.browserSize="${BROWSER_SIZE}"
+
+      # if: always() — это условие шага, а не continue-on-error:
+      # статус job при падении тестов остаётся failed, но диагностика сохраняется
+      - name: Generate Allure report
+        if: always()
+        run: npx allure generate "${ALLURE_RESULTS_DIR}" -o "${ALLURE_REPORT_DIR}"
+
+      - name: "Upload artifact: allure-results"
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: allure-results
+          path: "${{ env.ALLURE_RESULTS_DIR }}"
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: error
+
+      - name: "Upload artifact: test-reports"
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests
+            build/test-results
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: error
+
+      - name: "Upload artifact: allure-report"
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: allure-report
+          path: "${{ env.ALLURE_REPORT_DIR }}"
+          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          if-no-files-found: error
+
+  pages:
+    name: Publish Allure report to GitHub Pages
+    needs: test
+    # Публикация даже при упавших тестах (test-job при этом остаётся failed),
+    # только для целевых веток
+    if: always() && contains(fromJSON(env.PAGES_BRANCHES), github.ref_name)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: "Download artifact: allure-report"
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: allure-report
+          path: allure-report
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

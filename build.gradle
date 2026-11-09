@@ -31,8 +31,10 @@ tasks.withType(JavaCompile) {
 test {
     useJUnitPlatform()
     doFirst {
-        delete "allure-results"
+        delete "build/allure-results"
     }
+    // Allure results: build/allure-results (local and CI)
+    systemProperty "allure.results.directory", "build/allure-results"
     // Forward only if set
     def prop
     prop = System.getProperty("selenide.baseUrl")
@@ -44,3 +46,17 @@ test {
     prop = System.getProperty("selenide.headless")
     if (prop != null) systemProperty("selenide.headless", prop)
 }
+
+// «0 тестов» — не успех
+tasks.register('failOnEmptyTestRun') {
+    def xmlFiles = fileTree("build/test-results/test") { include '*.xml' }
+    doLast {
+        def executed = xmlFiles.files.collect { (it.text =~ /<testcase[ \n]/).size() }.sum(0)
+        if (executed == 0) {
+            throw new GradleException("No tests were executed — this is NOT a success.")
+        }
+    }
+    mustRunAfter test
+}
+
+test.finalizedBy failOnEmptyTestRun
