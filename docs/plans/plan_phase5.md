@@ -1,6 +1,6 @@
 ### Фаза 5 — GitHub Actions
 
-Статус: DONE (2026-11-09), ожидает push и прогон в GitHub (push — по разрешению).
+Статус: DONE (2026-11-09, код: bf0e834), ожидает push и прогон в GitHub (push — по разрешению).
 
 Цель: воспроизводимый CI на hosted runner, без Selenoid.
 

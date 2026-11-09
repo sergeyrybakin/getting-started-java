@@ -40,3 +40,5 @@
 - Включить GitHub Pages в настройках репозитория (Settings → Pages → Source: GitHub Actions)
   и убедиться, что защита окружения github-pages не блокирует деплой.
 - First run: workflow_dispatch с browser_size=1920x1200, проверить артефакты и Pages.
+
+## Статус: завершено (2026-11-09) bf0e834
