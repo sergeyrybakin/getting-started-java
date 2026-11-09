@@ -42,3 +42,8 @@
 - First run: workflow_dispatch с browser_size=1920x1200, проверить артефакты и Pages.
 
 ## Статус: завершено (2026-11-09) bf0e834
+
+## Push
+
+- 2026-11-09: push ветки lispublika выполнен (origin/sergeyrybakin, new branch, tracking установлен).
+  Ожидался автостарт workflow ui-tests.yml (в push входят .github/workflows/ui-tests.yml, build.gradle, package*.json).
