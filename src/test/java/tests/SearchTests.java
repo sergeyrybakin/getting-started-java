@@ -15,7 +15,7 @@ public class SearchTests extends TestBase {
     private SearchPage searchPage = new SearchPage();
     private SearchResultsPage searchResultsPage = new SearchResultsPage();
     private static final String OPEN_URL_LOCATOR = Configuration.baseUrl+"/search";
-    private static final String SEARCH_CRITERION = "фото";
+    private static final String SEARCH_CRITERION = "фотF";
 
     @Test
     void successfulSearchTest() {
