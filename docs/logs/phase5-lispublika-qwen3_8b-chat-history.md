@@ -54,3 +54,22 @@
   недоступен в job-level if). Исправлено: ветки встроены в выражение —
   always() && (github.ref_name == \master\ || github.ref_name == \lispublika\),
   переменная PAGES_BRANCHES удалена из env. YAML перевалидирован, push выполнен.
+
+## Дополнение (2026-11-10) — «0 тестов» одной кнопкой
+
+- Задача: гарантировать, что сценарий «0 тестов» не проходит как успех, и дать способ проверить
+  это одной кнопкой из GitHub Actions (без коммитов).
+- `build.gradle`: `failOnEmptyTestRun` пересчитан — теперь считает только реально выполненные тесты
+  (по JUnit-XML: атрибут `testsuite.tests` минус `testsuite.skipped`, сумма по файлам); пропущенные
+  (`@Disabled` / `assumeTrue(false)` / @Tag-эксклюзии) НЕ засчитываются. Причина: старая реализация
+  считала тег `<testcase>` (включая `<skipped/>`), поэтому «все @Disabled» давал `BUILD SUCCESSFUL` — ложное прохождение.
+- `.github/workflows/ui-tests.yml`: вход `test_filter` (workflow_dispatch, `type: string`, default `«»`);
+  `env.TEST_FILTER`; шаг «Run UI tests» (`shell: bash`) при непустом фильтре добавляет `--tests "<filter>"`,
+  пусто = все тесты. Кнопка: Actions → UI Tests → Run workflow → `test_filter = no.such.*`.
+- Проверки (локально, с актуальным кодом):
+  - все `@Disabled` (`tests=3 skipped=3`) → `failOnEmptyTestRun FAILED` → `BUILD FAILED` (разрыв закрыт);
+  - `tests=3 skipped=0` → `BUILD SUCCESSFUL` (executed=3); `tests=3 skipped=1` → `BUILD SUCCESSFUL` (executed=2);
+  - пустая папка результатов → `BUILD FAILED`;
+  - E2E-команда из workflow с `--tests 'no.such.*'` → `BUILD FAILED` («No tests were executed (0 non-skipped)»);
+  - YAML валиден (pyyaml); bash-логика (пусто/фильтр) и пустой массив `FILTER_ARGS` под `set -u` — OK.
+- Статус: завершена (2026-11-10) c520662
