@@ -47,14 +47,28 @@ test {
     if (prop != null) systemProperty("selenide.headless", prop)
 }
 
-// «0 тестов» — не успех
+// «0 тестов» — не успех.
+// Считаем ТОЛЬКО реально выполненные тесты = testSuite.tests − testSuite.skipped.
+// Пропущенные (@Disabled / assumeTrue(false) / @Tag-эксклюзии) НЕ засчитываются:
+// иначе run со 0 выполненными тестами ошибочно прошёл бы как успех.
+// Если ни одного не выполнено — сборка падает (finalizedBy запускается и при упавшей test).
 tasks.register('failOnEmptyTestRun') {
-    def xmlFiles = fileTree("build/test-results/test") { include '*.xml' }
     doLast {
-        def executed = xmlFiles.files.collect { (it.text =~ /<testcase[ \n]/).size() }.sum(0)
-        if (executed == 0) {
-            throw new GradleException("No tests were executed — this is NOT a success.")
+        def files = fileTree("build/test-results/test") { include '*.xml' }.files
+        def executed = files.sum(0) { File f ->
+            def txt = f.text
+            int tests = 0
+            int skipped = 0
+            def tMatch = (txt =~ /<testsuite\b[^>]*\stests="(\d+)"/)
+            if (tMatch.find()) tests = tMatch.group(1).toInteger()
+            def sMatch = (txt =~ /<testsuite\b[^>]*\sskipped="(\d+)"/)
+            if (sMatch.find()) skipped = sMatch.group(1).toInteger()
+            Math.max(0, tests - skipped)
         }
+        if (executed == 0) {
+            throw new GradleException("No tests were executed (0 non-skipped) — this is NOT a success.")
+        }
+        logger.lifecycle("failOnEmptyTestRun: OK — executed (non-skipped) = ${executed}")
     }
     mustRunAfter test
 }
