@@ -123,6 +123,20 @@ jobs:
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
           if-no-files-found: error
 
+      # Фаза 6: Telegram-уведомление о результатах прогона (best-effort).
+      # if: always() — уведомлять при любом исходе: все прошли / есть падения /
+      # 0 тестов / сбой сборки до тестов. Скрипт ВСЕГДА завершается с кодом 0 —
+      # не переворачивает статус job и не маскирует исходное падение
+      # (continue-on-error не используется; ошибка видна в логе как ::error::).
+      # Секреты TG_BOT_TOKEN/TG_CHAT_ID берутся из secrets GitHub; если не заданы —
+      # отправка SKIPPED (запрос не выполняется, шаг остаётся успешным).
+      - name: Notify to Telegram
+        if: always()
+        env:
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: bash scripts/telegram-notify.sh
+
   pages:
     name: Publish Allure report to GitHub Pages
     needs: test

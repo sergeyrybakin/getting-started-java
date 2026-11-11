@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="tests.SearchTests" tests="2" skipped="0" failures="0" errors="0" time="3.2" timestamp="2026-11-10T10:00:00">
+  <testcase name="successfulSearchTest" classname="tests.SearchTests" time="1.5"/>
+  <testcase name="tabsSwitchTest" classname="tests.SearchTests" time="1.7"/>
+</testsuite>

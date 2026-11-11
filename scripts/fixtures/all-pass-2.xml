@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="tests.OtherTests" tests="1" skipped="0" failures="0" errors="0" time="0.5" timestamp="2026-11-10T10:00:00">
+  <testcase name="extraTest" classname="tests.OtherTests" time="0.5"/>
+</testsuite>

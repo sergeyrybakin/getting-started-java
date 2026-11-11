@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="tests.SearchTests" tests="3" skipped="1" failures="1" errors="0" time="5.0" timestamp="2026-11-10T10:00:00">
+  <testcase name="successfulSearchTest" classname="tests.SearchTests" time="1.2"/>
+  <testcase name="brokenTest" classname="tests.SearchTests" time="2.0">
+    <failure message="AssertionFailedError: expected &#39;foo&#39; but was &#39;bar&#39;" type="org.opentest4j.AssertionFailedError">
+      at tests.SearchTests.brokenTest(SearchTests.java:42)
+    </failure>
+  </testcase>
+  <testcase name="disabledTest" classname="tests.SearchTests" time="0.0">
+    <skipped/>
+  </testcase>
+</testsuite>
