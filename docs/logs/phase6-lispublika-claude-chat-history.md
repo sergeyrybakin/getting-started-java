@@ -41,3 +41,25 @@
 - Push без разрешения не выполнялся.
 
 ## Статус: завершено (2026-11-11) 533fb10
+
+
+Completed
+
+Push выполнен:
+
+```
+a731c23..d18c07e  lispublika -> lispublika
+```
+
+В `origin/lispublika` попали оба коммита Фазы 6:
+
+- `533fb10` Фаза 6 — Telegram-уведомления (scripts, workflow)
+- `d18c07e` Фаза 6 — лог сессии и статус плана: завершена
+
+Локальная и удалённая ветка синхронизированы, рабочее дерево чистое.
+
+Чего ожидать дальше:
+
+1. __CI__: push в `lispublika` автоматически запустит workflow `ui-tests.yml` (Actions → UI Tests). Шаг «Notify to Telegram» отработает, но пока без секретов завершится `SKIPPED` (шаг успешный, на исход не влияет).
+2. __Секреты__: задайте `TG_BOT_TOKEN` и `TG_CHAT_ID` (Settings → Secrets and variables → Actions, как описал выше) — тогда при следующем прогоне (push, PR или ручной Run workflow) придёт реальное сообщение в Telegram.
+3. Проверить можно по-ручному: Actions → UI Tests → __Run workflow__ → ветка `lispublika` — прогон без новых коммитов.
