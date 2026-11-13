@@ -37,7 +37,7 @@ pipeline {
         // Таймаут всего пайплайна (защита от «зависания» браузера/сети).
         timeout(time: 40, unit: 'MINUTES')
         // Ротация: хранить 10 последних запусков и 30 дней (core-опция).
-        buildDiscarder(logRotator(numToKeepStr: '10', numDaysToKeepStr: '30'))
+        buildDiscarder(logRotator(numToKeepStr: '5', numDaysToKeepStr: '15'))
     }
 
     // Согласованные параметры — зеркалят workflow_dispatch из ui-tests.yml.
