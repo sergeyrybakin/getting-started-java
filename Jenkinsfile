@@ -33,11 +33,11 @@ pipeline {
 
     options {
         // Аналог concurrency из GitHub Actions: не дублировать параллельные запуски.
-        disableConcurrentBuild()
+        disableConcurrentBuilds()
         // Таймаут всего пайплайна (защита от «зависания» браузера/сети).
         timeout(time: 40, unit: 'MINUTES')
         // Ротация: хранить 10 последних запусков и 30 дней (core-опция).
-        buildDiscarder(logRotator(numToKeepStr: '5', numDaysToKeepStr: '15'))
+        buildDiscarder(logRotator(numToKeepStr: '5', daysToKeepStr: '15'))
     }
 
     // Согласованные параметры — зеркалят workflow_dispatch из ui-tests.yml.
@@ -173,55 +173,38 @@ EOF
                 '''
             }
         }
+    }
 
-        // --- Диагностические стейджи: всегда выполняются (в т.ч. при падении тестов),
-        //     но через catchError НЕ переворачивают FAILURE тестов:
-        //       тесты ПАЛИ → сборка FAILURE (авторитетный статус, не маскируется);
-        //       тесты ПРОШЛИ, а отчёт/архив упали → UNSTABLE (проблема отчёта, а не тестов).
-        stage('Generate Allure report') {
-            when {
-                always()
+    // --- Диагностические шаги: ВСЕГДА выполняются (в т.ч. при падении 'Run tests'),
+    //     через catchError НЕ переворачивают FAILURE тестов.
+    //     ВАЖНО: в Declarative "always" — это секция post, а НЕ when-условие стейджа
+    //     (when { always() } не компилируется: "Unknown conditional always").
+    post {
+        always {
+            // 1) Generate Allure report — закреплённый CLI (npx allure), а не Allure-плагин.
+            catchError {
+                sh 'npx allure generate "${ALLURE_RESULTS_DIR}" -o "${ALLURE_REPORT_DIR}"'
             }
-            steps {
-                catchError {
-                    // Закреплённый CLI (npx allure, как в CI), а не Allure-плагин.
-                    sh 'npx allure generate "${ALLURE_RESULTS_DIR}" -o "${ALLURE_REPORT_DIR}"'
-                }
-            }
-        }
 
-        stage('Publish artifacts') {
-            when {
-                always()
+            // 2) Publish artifacts — JUnit XML + результаты + отчёт. Все core-шаги.
+            //    allowEmptyArchive: не падать при отсутствии файлов (напр. сбой до тестов).
+            catchError {
+                archiveArtifacts artifacts: "${JUNIT_XML_GLOB}", allowEmptyArchive: true, fingerprint: true
+                archiveArtifacts artifacts: "${ALLURE_RESULTS_DIR}/**", allowEmptyArchive: true, fingerprint: true
+                archiveArtifacts artifacts: "${TEST_REPORTS_DIR}/**", allowEmptyArchive: true, fingerprint: true
+                archiveArtifacts artifacts: "${ALLURE_REPORT_DIR}/**", allowEmptyArchive: true, fingerprint: true
             }
-            steps {
-                catchError {
-                    // Публикация JUnit XML + результатов + отчёта. Все core-шаги.
-                    // allowEmptyArchive: не падать при отсутствии файлов (напр. сбой до тестов).
-                    archiveArtifacts artifacts: "${JUNIT_XML_GLOB}", allowEmptyArchive: true, fingerprint: true
-                    archiveArtifacts artifacts: "${ALLURE_RESULTS_DIR}/**", allowEmptyArchive: true, fingerprint: true
-                    archiveArtifacts artifacts: "${TEST_REPORTS_DIR}/**", allowEmptyArchive: true, fingerprint: true
-                    archiveArtifacts artifacts: "${ALLURE_REPORT_DIR}/**", allowEmptyArchive: true, fingerprint: true
-                }
-            }
-        }
 
-        stage('Notify Telegram') {
-            when {
-                always()
-            }
-            // Секреты из password-параметров → env (см. telegram-notify.sh: пусто → SKIPPED, exit 0).
-            environment {
-                TG_BOT_TOKEN = "${params.TG_BOT_TOKEN ?: ''}"
-                TG_CHAT_ID   = "${params.TG_CHAT_ID ?: ''}"
-                PROJECT      = 'getting-started-java'
-                CI_NAME      = 'jenkins'
-                BRANCH       = "${env.BRANCH_NAME ?: 'unknown-branch'}"
-                COMMIT       = "${env.GIT_COMMIT ?: 'unknown-commit'}"
-            }
-            steps {
-                // Скрипт best-effort (всегда exit 0); catchError на случай сбоев окружения.
-                catchError {
+            // 3) Notify Telegram — секреты из password-параметров (пусто -> SKIPPED, exit 0).
+            catchError {
+                withEnv([
+                    "TG_BOT_TOKEN=${params.TG_BOT_TOKEN ?: ''}",
+                    "TG_CHAT_ID=${params.TG_CHAT_ID ?: ''}",
+                    "PROJECT=getting-started-java",
+                    "CI_NAME=jenkins",
+                    "BRANCH=${env.BRANCH_NAME ?: 'unknown-branch'}",
+                    "COMMIT=${env.GIT_COMMIT ?: 'unknown-commit'}",
+                ]) {
                     sh 'bash scripts/telegram-notify.sh'
                 }
             }
