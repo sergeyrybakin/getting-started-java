@@ -17,7 +17,9 @@
 //     используются: только core-шаги, чтобы не требовать установки плагинов/
 //     изменений Jenkins без разрешения (см. план и AGENTS.md).
 //
-// ВАЖНО (интеграция НЕ проверена — Jenkins недоступен, API 401; см. план):
+// ВАЖНО (см. план): синтаксис ПРОВЕРЕН офлайн PASS (Docker Jenkins 2.580.2,
+//   workflow-aggregator + pipeline-model-definition; см. docs/plans/plan_phase7.md);
+//   live-интеграция НЕ проверена — jenkins.qa.guru без write-доступа (SSO, API 401/403):
 //   * Job = "Pipeline (from SCM)" → репозиторий
 //     https://github.com/sergeyrybakin/getting-started-java, ветка `lispublika`
 //     (иначе `checkout scm` не сработает).
