@@ -39,3 +39,8 @@
 - `scripts/telegram-notify.sh` — скрипт отправки (bash+curl, best-effort, всегда exit 0).
 - `scripts/telegram-notify.test.sh` + `scripts/fixtures/*.xml` — проверка без отправки.
 - `.github/workflows/ui-tests.yml` — шаг «Notify to Telegram» (после артефактов, `if: always()`).
+  
+
+### Комментарий
+
+Начиная с Фазы6 модель считает себя `claude`. Это не смотря на то, что в настройках прописана `qwen3.8:27b`
